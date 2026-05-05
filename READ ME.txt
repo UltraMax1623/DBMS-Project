@@ -1,4 +1,4 @@
-Hello this is our DBMS projects
+Hello this is our DBMS project
 
 contributors : - 
 
