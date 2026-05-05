@@ -1,0 +1,17 @@
+Hello this is our DBMS projects
+
+contributors : - 
+
+Pavan S G
+Nehal S
+Monish C
+
+TO-DO list :-
+
+Do backend
+Do frontend
+Do sql
+Submit
+
+
+
