@@ -1,62 +1,68 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login</title>
-</head>
-<body>
-  <form id="loginForm">
-    <input
-      id="username"
-      type="text"
-      name="username"
-      placeholder="Username"
-      required
-    />
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Login</title>
+	</head>
+	<body>
+		<form id="loginForm">
+			<input
+				id="username"
+				type="text"
+				name="username"
+				placeholder="Username"
+				required
+			/>
 
-    <input
-      id="password"
-      type="password"
-      name="password"
-      placeholder="Password"
-      required
-    />
+			<input
+				id="password"
+				type="password"
+				name="password"
+				placeholder="Password"
+				required
+			/>
 
-    <select name="role" id="role">
-      <option value="doctor">doctor</option>
-      <option value="patient">patient</option>
-      <option value="admin">admin</option>
-    </select>
+			<select name="role" id="role">
+				<option value="doctor">doctor</option>
+				<option value="patient">patient</option>
+				<option value="admin">admin</option>
+			</select>
 
-    <input id="result" type="text" placeholder="Result" readonly />
+			<input id="result" type="text" placeholder="Result" readonly />
 
-    <button type="submit">Submit</button>
-  </form>
+			<button type="submit">Submit</button>
+		</form>
 
-  <script>
-    document.getElementById("loginForm").addEventListener("submit", loginUser);
+		<script>
+			document
+				.getElementById("loginForm")
+				.addEventListener("submit", loginUser);
 
-    async function loginUser(e) {
-      e.preventDefault();
+			async function loginUser(e) {
+				e.preventDefault();
 
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-      const role = document.getElementById("role").value;
+				const username = document.getElementById("username").value;
+				const password = document.getElementById("password").value;
+				const role = document.getElementById("role").value;
 
-      const response = await fetch("/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ username, password, role })
-      });
+				const response = await fetch("/login", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ username, password, role }),
+				});
 
-      const data = await response.json();
-      console.log(data);
-
-      document.getElementById("result").value = data.message || "Login request sent";
-    }
-  </script>
-</body>
+				const data = await response.json();
+				if (response.ok) {
+					window.location.href = data.redirect;
+				} else {
+					document.getElementById("result").value = data.message;
+				}
+				document.getElementById("result").value =
+					data.message || "Login request sent";
+			}
+		</script>
+	</body>
 </html>
