@@ -20,6 +20,7 @@
   "homepage": "https://github.com/UltraMax1623/DBMS-Project#readme",
   "dependencies": {
     "express": "^5.2.1",
+    "express-session": "^1.19.0",
     "mysql2": "^3.22.3"
   }
 }
