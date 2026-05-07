@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 //Body-parser is middleware in Express.js that parses incoming request bodies (like JSON or form data)
 //into readable JavaScript objects accessible via req.body.
 const login = require("./routes/login");
+const signup = require("./routes/signup");
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -27,6 +28,7 @@ app.use(
 
 // Routes
 app.use("/login", login);
+app.use("/signup",signup);
 
 app.listen(3000, () => {
 	console.log("Server running at http://localhost:3000");

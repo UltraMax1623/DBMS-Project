@@ -2,31 +2,31 @@ const db = require("../db");
 
 const loginUser = async (req, res) => {
 	try {
-		const { username, password, role } = req.body;
+		const { email, password, role } = req.body;
 
-		if (!username || !password || !role) {
+		if (!email || !password || !role) {
 			return res.status(400).json({ message: "All fields are required" });
 		}
 
 		const [rows] = await db.query(
-			"SELECT * FROM login WHERE username = ? AND password = ? AND role = ?",
-			[username, password, role],
+			"SELECT * FROM login WHERE email = ? AND password = ? AND role = ?",
+			[email, password, role],
 		);
 
 		if (rows.length === 0) {
 			return res
 				.status(401)
-				.json({ message: "Invalid username, password, or role" });
+				.json({ message: "Invalid email, password, or role" });
 		}
 
 		req.session.user = {
 			id: rows[0].id,
-			username: rows[0].username,
+			email: rows[0].email,
 			role: rows[0].role,
 		};
 
 		let redirectPage = "";
-
+		
 		switch (rows[0].role) {
 			case "doctor":
 				redirectPage = "/HTML/doctor.html";
