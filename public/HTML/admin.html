@@ -1,1 +1,150 @@
-<h1>Admin Dashboard</h1>
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Doctor Signup</title>
+	</head>
+	<body>
+		<form id="doccreateForm">
+			<div>
+				<label for="name">Name</label>
+				<input type="text" id="name" name="name" required />
+			</div>
+
+			<div>
+				<label for="email">Email</label>
+				<input type="email" id="email" name="email" required />
+			</div>
+
+			<div>
+				<label for="password">Password</label>
+				<input type="password" id="password" name="password" required />
+			</div>
+
+			<div>
+				<label for="confirmPassword">Confirm Password</label>
+				<input
+					type="password"
+					id="confirmPassword"
+					name="confirmPassword"
+					required
+				/>
+			</div>
+
+			<div>
+				<label for="specialization">Specialization</label>
+				<input
+					type="text"
+					id="specialization"
+					name="specialization"
+					required
+				/>
+			</div>
+
+			<div>
+				<label for="phone">Phone Number</label>
+				<input
+					type="tel"
+					id="phone"
+					name="phone_no"
+					pattern="[0-9]{10}"
+					required
+				/>
+			</div>
+
+			<div>
+				<label for="dob">Date of Birth</label>
+				<input type="date" id="dob" name="dob" required />
+			</div>
+
+			<div>
+				<label>Gender</label>
+				<input
+					type="radio"
+					id="male"
+					name="gender"
+					value="male"
+					required
+				/>
+				<label for="male">Male</label>
+
+				<input
+					type="radio"
+					id="female"
+					name="gender"
+					value="female"
+					required
+				/>
+				<label for="female">Female</label>
+			</div>
+
+			<button type="submit">Sign Up</button>
+			<h1>Doctor List</h1>
+			<div id="doctorContainer"></div>
+		</form>
+
+		<input id="emailResult" type="text" placeholder="Result" readonly />
+		<input id="passwordResult" type="text" placeholder="Result" readonly />
+
+		<script>
+			document
+				.getElementById("doccreateForm")
+				.addEventListener("submit", signupUser);
+
+			async function signupUser(e) {
+				e.preventDefault();
+
+				const name = document.getElementById("name").value;
+				const email = document.getElementById("email").value;
+				const password = document.getElementById("password").value;
+				const confirmPassword =
+					document.getElementById("confirmPassword").value;
+				const specialization =
+					document.getElementById("specialization").value;
+				const phone_no = document.getElementById("phone").value;
+				const dob = document.getElementById("dob").value;
+				const gender = document.querySelector(
+					'input[name="gender"]:checked',
+				)?.value;
+				const emailResult = document.getElementById("emailResult");
+				const passwordResult =
+					document.getElementById("passwordResult");
+
+				if (password !== confirmPassword) {
+					alert("Passwords do not match");
+					return;
+				}
+
+				try {
+					const response = await fetch("/signup/doc", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							name,
+							email,
+							password,
+							phone_no,
+							dob,
+							gender,
+							specialization,
+						}),
+					});
+
+					const data = await response.json();
+					emailResult.value = data.email;
+					passwordResult.value = data.password;
+					if (response.ok && data.redirect) {
+						window.location.href = data.redirect;
+					}
+				} catch (err) {
+					console.error("Signup request failed:", err);
+					emailResult.value = "Request failed: " + err.message;
+					passwordResult.value = "Request failed: " + err.message;
+				}
+			}
+		</script>
+	</body>
+</html>
