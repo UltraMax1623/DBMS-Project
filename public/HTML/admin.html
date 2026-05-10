@@ -6,6 +6,7 @@
 		<title>Doctor Signup</title>
 	</head>
 	<body>
+		<h1>Create Doctor Account</h1>
 		<form id="doccreateForm">
 			<div>
 				<label for="name">Name</label>
@@ -80,12 +81,16 @@
 			</div>
 
 			<button type="submit">Sign Up</button>
-			<h1>Doctor List</h1>
-			<div id="doctorContainer"></div>
 		</form>
 
 		<input id="emailResult" type="text" placeholder="Result" readonly />
 		<input id="passwordResult" type="text" placeholder="Result" readonly />
+		<h1>Doctor List</h1>
+		<div id="status"></div>
+		<div id="doctorContainer"></div>
+		<h1>Patient List</h1>
+		<div id="pstatus"></div>
+		<div id="patientContainer"></div>
 
 		<script>
 			document
@@ -143,6 +148,139 @@
 					console.error("Signup request failed:", err);
 					emailResult.value = "Request failed: " + err.message;
 					passwordResult.value = "Request failed: " + err.message;
+				}
+			}
+			// Fetch and display the list of doctors
+			document.addEventListener("DOMContentLoaded", loadDoctors);
+
+			async function loadDoctors() {
+				const status = document.getElementById("status");
+				const container = document.getElementById("doctorContainer");
+
+				status.textContent = "Loading doctor list...";
+				container.innerHTML = "";
+
+				try {
+					const response = await fetch("/loaddata/doctorlist");
+
+					const contentType =
+						response.headers.get("content-type") || "";
+
+					let data;
+
+					if (contentType.includes("application/json")) {
+						data = await response.json();
+					} else {
+						const text = await response.text();
+						throw new Error(
+							"Server did not return JSON.\nResponse:\n" + text,
+						);
+					}
+					if (!response.ok) {
+						throw new Error(
+							data.message || `HTTP error ${response.status}`,
+						);
+					}
+
+					if (!Array.isArray(data)) {
+						throw new Error(
+							"Expected an array, but got: " + typeof data,
+						);
+					}
+
+					if (data.length === 0) {
+						status.textContent = "No patients found.";
+						return;
+					}
+
+					status.textContent = `Loaded ${data.length} patient(s).`;
+
+					data.forEach((doc, index) => {
+						const div = document.createElement("div");
+						div.className = "card";
+
+						div.innerHTML = `
+            <div><strong>Row:</strong> ${index + 1}</div>
+            <div><strong>User ID:</strong> ${doc.user_id ?? "N/A"}</div>
+            <div><strong>Name:</strong> ${doc.name ?? "N/A"}</div>
+            <div><strong>Email:</strong> ${doc.email ?? "N/A"}</div>
+            <div><strong>Specialization:</strong> ${doc.specialization ?? "N/A"}</div>
+            <div><strong>Phone:</strong> ${doc.phone_no ?? "N/A"}</div>
+            <div><strong>DOB:</strong> ${doc.dob ?? "N/A"}</div>
+            <div><strong>Gender:</strong> ${doc.gender ?? "N/A"}</div>
+          `;
+
+						container.appendChild(div);
+					});
+				} catch (err) {
+					console.error("Failed to load patients:", err);
+					status.innerHTML = `<span class="error">Failed to load patient list.</span>`;
+				}
+			}
+			// Fetch and display the list of patients
+			document.addEventListener("DOMContentLoaded", loadPatients);
+
+			async function loadPatients() {
+				const status = document.getElementById("pstatus");
+				const container = document.getElementById("patientContainer");
+
+				status.textContent = "Loading patient list...";
+				container.innerHTML = "";
+
+				try {
+					const response = await fetch("/loaddata/patientlist");
+					const contentType =
+						response.headers.get("content-type") || "";
+
+					let data;
+
+					if (contentType.includes("application/json")) {
+						data = await response.json();
+					} else {
+						const text = await response.text();
+						throw new Error(
+							"Server did not return JSON.\nResponse:\n" + text,
+						);
+					}
+
+					if (!response.ok) {
+						throw new Error(
+							data.message || `HTTP error ${response.status}`,
+						);
+					}
+
+					if (!Array.isArray(data)) {
+						throw new Error(
+							"Expected an array, but got: " + typeof data,
+						);
+					}
+
+					if (data.length === 0) {
+						status.textContent = "No patients found.";
+						return;
+					}
+
+					status.textContent = `Loaded ${data.length} patient(s).`;
+
+					data.forEach((patient, index) => {
+						const div = document.createElement("div");
+						div.className = "card";
+
+						div.innerHTML = `
+                <div><strong>Row:</strong> ${index + 1}</div>
+                <div><strong>User ID:</strong> ${patient.user_id ?? "N/A"}</div>
+                <div><strong>Name:</strong> ${patient.name ?? "N/A"}</div>
+                <div><strong>Email:</strong> ${patient.email ?? "N/A"}</div>
+                <div><strong>Phone:</strong> ${patient.phone_no ?? "N/A"}</div>
+                <div><strong>DOB:</strong> ${patient.dob ?? "N/A"}</div>
+                <div><strong>Gender:</strong> ${patient.gender ?? "N/A"}</div>
+            `;
+
+						container.appendChild(div);
+					});
+				} catch (err) {
+					console.error("Failed to load patients:", err);
+					status.innerHTML = `<span class="error">${err.message}</span>`;
 				}
 			}
 		</script>

@@ -18,15 +18,15 @@ const loginUser = async (req, res) => {
 				.status(401)
 				.json({ message: "Invalid email, password, or role" });
 		}
-
+		console.log(rows[0]);
 		req.session.user = {
-			id: rows[0].id,
+			id: rows[0].user_id,
 			email: rows[0].email,
 			role: rows[0].role,
 		};
-
+		console.log("session after login:", req.session);
 		let redirectPage = "";
-		
+
 		switch (rows[0].role) {
 			case "doctor":
 				redirectPage = "/HTML/doctor.html";
@@ -54,6 +54,7 @@ const loginUser = async (req, res) => {
 			message: "Internal server error",
 		});
 	}
+	console.log("session after login:", req.session);
 };
 
 module.exports = { loginUser };

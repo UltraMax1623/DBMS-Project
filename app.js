@@ -7,6 +7,8 @@ const bodyParser = require("body-parser");
 //into readable JavaScript objects accessible via req.body.
 const login = require("./routes/login");
 const signup = require("./routes/signup");
+const loaddata = require("./routes/loaddata");
+const request = require("./routes/request");
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -29,6 +31,8 @@ app.use(
 // Routes
 app.use("/login", login);
 app.use("/signup",signup);
+app.use("/loaddata",loaddata);
+app.use("/request",request);
 
 app.listen(3000, () => {
 	console.log("Server running at http://localhost:3000");

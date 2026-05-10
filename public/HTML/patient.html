@@ -1,1 +1,197 @@
-<h1>Patient Dashboard</h1>
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Doctor Signup</title>
+	</head>
+	<style>
+		.doctor-card {
+			border: 1px solid #ccc;
+			padding: 12px;
+			margin: 10px 0;
+			border-radius: 8px;
+			cursor: pointer;
+			background: white;
+		}
+
+		.doctor-card:hover {
+			background: #f5f5f5;
+		}
+
+		.doctor-card.selected {
+			border: 2px solid blue;
+			background: #e6f0ff;
+		}
+	</style>
+	<body>
+		<form id="reqappointment">
+			<input type="hidden" id="selectedDoctorId" />
+
+			<h1>Doctor List</h1>
+
+			<div id="status"></div>
+			<div id="doctorContainer"></div>
+			<div id="debugBox" class="debug"></div>
+
+			<input type="date" id="date" name="date" required />
+
+			<select id="category" name="category" required>
+				<option value="">Select an option</option>
+				<option value="9:00AM">9:00AM</option>
+				<option value="10:30 AM">10:30 AM</option>
+				<option value="11:15 AM">11:15 AM</option>
+				<option value="3:00 PM">3:00 PM</option>
+				<option value="7:00 PM">7:00 PM</option>
+			</select>
+
+			<input
+				type="text"
+				id="textInput"
+				name="textInput"
+				placeholder="Enter text"
+				required
+			/>
+
+			<button type="submit">Submit</button>
+			<div id="formMessage"></div>
+		</form>
+	</body>
+	<script>
+		//doclist
+		document.addEventListener("DOMContentLoaded", loadDoctors);
+		let selectedDoctorId = null;
+
+		async function loadDoctors() {
+			const status = document.getElementById("status");
+			const container = document.getElementById("doctorContainer");
+			const debugBox = document.getElementById("debugBox");
+
+			status.textContent = "Loading doctor list...";
+			container.innerHTML = "";
+			debugBox.textContent = "loadDoctors started\n";
+
+			try {
+				const response = await fetch("/loaddata/doctorlist");
+				const data = await response.json();
+
+				if (!response.ok) {
+					throw new Error(
+						data.message || `HTTP error ${response.status}`,
+					);
+				}
+
+				if (!Array.isArray(data)) {
+					throw new Error("Expected array data");
+				}
+
+				if (data.length === 0) {
+					status.textContent = "No doctors found.";
+					return;
+				}
+
+				status.textContent = `Loaded ${data.length} doctor(s).`;
+
+				data.forEach((doc, index) => {
+					const div = document.createElement("div");
+					div.className = "doctor-card";
+					div.dataset.id = doc.user_id;
+
+					div.innerHTML = `
+                    <div><strong>Row:</strong> ${index + 1}</div>
+                    <div><strong>User ID:</strong> ${doc.user_id ?? "N/A"}</div>
+                    <div><strong>Name:</strong> ${doc.name ?? "N/A"}</div>
+                    <div><strong>Email:</strong> ${doc.email ?? "N/A"}</div>
+                    <div><strong>Specialization:</strong> ${doc.specialization ?? "N/A"}</div>
+                    <div><strong>Phone:</strong> ${doc.phone_no ?? "N/A"}</div>
+                    <div><strong>DOB:</strong> ${doc.dob ?? "N/A"}</div>
+                    <div><strong>Gender:</strong> ${doc.gender ?? "N/A"}</div>
+                `;
+
+					div.addEventListener("click", () => {
+						document
+							.querySelectorAll(".doctor-card")
+							.forEach((card) => {
+								card.classList.remove("selected");
+							});
+
+						div.classList.add("selected");
+						selectedDoctorId = doc.user_id;
+						document.getElementById("selectedDoctorId").value =
+							doc.user_id;
+
+						debugBox.textContent = `Selected Doctor ID: ${selectedDoctorId}`;
+					});
+
+					container.appendChild(div);
+				});
+			} catch (err) {
+				console.error("Failed to load doctors:", err);
+				status.innerHTML = `<span style="color:red;">Failed to load doctor list.</span>`;
+				debugBox.textContent = `Error: ${err.message}`;
+			}
+		}
+
+		//reqppointment
+		document
+			.getElementById("reqappointment")
+			.addEventListener("submit", reqappointment);
+		async function reqappointment(e) {
+			e.preventDefault();
+
+			const doctor_id = document.getElementById("selectedDoctorId").value;
+			const date = document.getElementById("date").value;
+			const category = document.getElementById("category").value;
+			const textInput = document.getElementById("textInput").value;
+			const debugBox = document.getElementById("debugBox");
+			const formMessage = document.getElementById("formMessage");
+
+			formMessage.style.color = "black";
+			formMessage.textContent = "Submitting...";
+
+			if (!doctor_id) {
+				alert("Please select one doctor");
+				return;
+			}
+
+			try {
+				const response = await fetch("/request/reqappointment", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						doctor_id,
+						date,
+						category,
+						textInput,
+					}),
+				});
+
+				const data = await response.json();
+
+				if (!response.ok) {
+					throw new Error(
+						data.message || "Failed to create appointment",
+					);
+				}
+
+				formMessage.style.color = "green";
+				formMessage.textContent =
+					data.message || "Appointment submitted successfully";
+				alert(data.message);
+				debugBox.textContent = JSON.stringify(data, null, 2);
+				document.getElementById("reqappointment").reset();
+				document.getElementById("selectedDoctorId").value = "";
+				selectedDoctorId = null;
+				document.querySelectorAll(".doctor-card").forEach((card) => {
+					card.classList.remove("selected");
+				});
+			} catch (err) {
+				console.error(err);
+				debugBox.textContent = err.message;
+				alert(err.message);
+			}
+		}
+	</script>
+</html>
