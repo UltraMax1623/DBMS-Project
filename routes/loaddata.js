@@ -5,10 +5,12 @@ const { doclist } = require("../controllers/doclistController");
 const { patientlist } = require("../controllers/patientlistController");
 const {appointmentlist} = require("../controllers/appointmentlistController");
 const {userappointmentlist} = require("../controllers/userappointmentlistController");
+const { userprofile } = require("../controllers/userprofileController");
 
 router.get("/doctorlist", doclist);
 router.get("/patientlist",patientlist);
 router.get("/appointmentlist",appointmentlist);
 router.get("/userappointmentlist",userappointmentlist);
+router.get("/userprofile",userprofile)
 
 module.exports = router;

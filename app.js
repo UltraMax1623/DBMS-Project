@@ -3,6 +3,7 @@ const app = express();
 const path = require("path");
 const session = require("express-session");
 const bodyParser = require("body-parser");
+const isLoggedIn = require("./middleware/authmiddleware");
 //Body-parser is middleware in Express.js that parses incoming request bodies (like JSON or form data)
 //into readable JavaScript objects accessible via req.body.
 const login = require("./routes/login");
@@ -31,8 +32,8 @@ app.use(
 // Routes
 app.use("/login", login);
 app.use("/signup",signup);
-app.use("/loaddata",loaddata);
-app.use("/request",request);
+app.use("/loaddata",isLoggedIn,loaddata);
+app.use("/request",isLoggedIn,request);
 
 app.listen(3000, () => {
 	console.log("Server running at http://localhost:3000");

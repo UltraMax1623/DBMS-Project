@@ -9,7 +9,7 @@ const loginUser = async (req, res) => {
 		}
 
 		const [rows] = await db.query(
-			"SELECT * FROM login WHERE email = ? AND password = ? AND role = ?",
+			"SELECT * FROM login WHERE email = ? AND password = ? AND role = ? AND is_active = 'active'",
 			[email, password, role],
 		);
 

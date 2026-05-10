@@ -28,13 +28,21 @@
 				<option value="patient">patient</option>
 				<option value="admin">admin</option>
 			</select>
-
-			<input id="result" type="text" placeholder="Result" readonly />
-
+			
 			<button type="submit">Submit</button>
+			<input id="result" type="text" readonly />
+			<div id="forgotBox" style="display: none">
+				<a href="./forgotpassword.html">Forgot password?</a>
+			</div>
 		</form>
 
 		<script>
+			const roleSelect = document.getElementById("role");
+			const forgotBox = document.getElementById("forgotBox");
+			roleSelect.addEventListener("change", function () {
+					forgotBox.style.display =
+						this.value === "patient" ? "block" : "none";
+				});
 			document
 				.getElementById("loginForm")
 				.addEventListener("submit", loginUser);
@@ -45,8 +53,7 @@
 				const email = document.getElementById("email").value;
 				const password = document.getElementById("password").value;
 				const role = document.getElementById("role").value;
-
-				const response = await fetch("/login", {
+				const response = await fetch("/login/login", {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",

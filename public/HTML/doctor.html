@@ -6,13 +6,101 @@
 		<title>Doctor Dashboard</title>
 	</head>
 	<body>
+		<h1>My Profile</h1>
+
+		<div><strong>Name:</strong> <span id="name"></span></div>
+		<div><strong>Email:</strong> <span id="email"></span></div>
+		<div><strong>Phone:</strong> <span id="phone"></span></div>
+		<div><strong>DOB:</strong> <span id="dob"></span></div>
+		<div><strong>Gender:</strong> <span id="gender"></span></div>
+		<div id="specializationBox" style="display: none">
+			<strong>Specialization:</strong> <span id="specialization"></span>
+		</div>
 		<h1>My Appointments</h1>
 		<div id="appointmentstatus"></div>
 		<div id="appointmentContainer"></div>
 		<div id="debugBox1" class="debug"></div>
 	</body>
-    <script>
-        document.addEventListener("DOMContentLoaded", loadAppointments);
+	<script>
+		async function loadProfile() {
+			try {
+				const response = await fetch("/loaddata/userprofile");
+				const data = await response.json();
+
+				if (!response.ok) {
+					alert(data.message || "Failed to load profile");
+					return;
+				}
+
+				document.getElementById("name").textContent = data.name || "";
+				document.getElementById("email").textContent = data.email || "";
+				document.getElementById("phone").textContent = data.phone || "";
+				document.getElementById("dob").textContent = data.dob || "";
+				document.getElementById("gender").textContent =
+					data.gender || "";
+
+				if (data.role === "doctor") {
+					document.getElementById("specializationBox").style.display =
+						"block";
+					document.getElementById("specialization").textContent =
+						data.specialization || "";
+				}
+			} catch (err) {
+				console.error(err);
+				alert("Something went wrong");
+			}
+		}
+		loadProfile();
+
+		document.addEventListener("DOMContentLoaded", () => {
+			loadAppointments();
+
+			const container = document.getElementById("appointmentContainer");
+
+			container.addEventListener("change", async (e) => {
+				if (!e.target.classList.contains("completedToggle")) return;
+
+				const cb = e.target;
+				const appointmentId = cb.dataset.id;
+				const newStatus = cb.checked ? "completed" : "confirmed";
+
+				try {
+					const response = await fetch("/request/docupdatestatus", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							appointment_id: appointmentId,
+							status: newStatus,
+						}),
+					});
+
+					const data = await response.json();
+
+					if (!response.ok) {
+						alert(data.message || "Failed to update status");
+						cb.checked = !cb.checked;
+						return;
+					}
+
+					console.log(
+						`Status updated to ${newStatus} for appointment ${appointmentId}`,
+					);
+
+					const card = cb.closest(".card");
+					const statusDiv = card.querySelector(".statusText");
+					if (statusDiv) {
+						statusDiv.textContent = newStatus;
+					}
+				} catch (err) {
+					console.error(err);
+					alert("Something went wrong");
+					cb.checked = !cb.checked;
+				}
+			});
+		});
+
 		async function loadAppointments() {
 			const status = document.getElementById("appointmentstatus");
 			const container = document.getElementById("appointmentContainer");
@@ -70,7 +158,17 @@
                 <div><strong>Date:</strong> ${item.appointment_date ?? "N/A"}</div>
                 <div><strong>Time:</strong> ${item.appointment_time ?? "N/A"}</div>
                 <div><strong>Reason:</strong> ${item.reason ?? "N/A"}</div>
-                <div><strong>Status:</strong> ${item.request_status ?? "N/A"}</div>
+                <div><strong>Status:</strong> <span class="statusText">${item.request_status ?? "N/A"}</span></div>
+
+                <label>
+                    <input
+                        type="checkbox"
+                        class="completedToggle"
+                        data-id="${item.appointment_id}"
+                        ${item.request_status === "completed" ? "checked" : ""}
+                    >
+                    Completed
+                </label>
             `;
 
 					container.appendChild(div);
@@ -81,5 +179,5 @@
 				debugBox.textContent = err.message;
 			}
 		}
-    </script>
+	</script>
 </html>

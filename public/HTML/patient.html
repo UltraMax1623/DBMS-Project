@@ -25,6 +25,16 @@
 		}
 	</style>
 	<body>
+		<h1>My Profile</h1>
+
+		<div><strong>Name:</strong> <span id="name"></span></div>
+		<div><strong>Email:</strong> <span id="email"></span></div>
+		<div><strong>Phone:</strong> <span id="phone"></span></div>
+		<div><strong>DOB:</strong> <span id="dob"></span></div>
+		<div><strong>Gender:</strong> <span id="gender"></span></div>
+		<div id="specializationBox" style="display: none">
+			<strong>Specialization:</strong> <span id="specialization"></span>
+		</div>
 		<h1>Request Appointment</h1>
 		<form id="reqappointment">
 			<input type="hidden" id="selectedDoctorId" />
@@ -61,8 +71,78 @@
 		<div id="appointmentstatus"></div>
 		<div id="appointmentContainer"></div>
 		<div id="debugBox1" class="debug"></div>
+
+		<button id="deleteAccountBtn" type="button">Delete Account</button>
+
+		<div id="deleteSection" style="display: none; margin-top: 15px">
+			<button id="cancelDeleteBtn" type="button">No</button>
+
+			<form id="deleteAccountForm" style="margin-top: 10px">
+				<div>
+					<label>Email:</label>
+					<input type="email" id="deleteEmail" required />
+				</div>
+
+				<div>
+					<label>Password:</label>
+					<input type="password" id="deletePassword" required />
+				</div>
+
+				<div>
+					<label>Confirm Password:</label>
+					<input
+						type="password"
+						id="confirmDeletePassword"
+						required
+					/>
+				</div>
+
+				<div style="margin-top: 10px">
+					<button type="submit">Confirm Delete</button>
+				</div>
+
+				<div style="margin-top: 10px">
+					<input
+						type="text"
+						id="deleteMessage"
+						readonly
+						placeholder="Status message will appear here"
+						style="width: 300px"
+					/>
+				</div>
+			</form>
+		</div>
 	</body>
 	<script>
+		async function loadProfile() {
+			try {
+				const response = await fetch("/loaddata/userprofile");
+				const data = await response.json();
+
+				if (!response.ok) {
+					alert(data.message || "Failed to load profile");
+					return;
+				}
+
+				document.getElementById("name").textContent = data.name || "";
+				document.getElementById("email").textContent = data.email || "";
+				document.getElementById("phone").textContent = data.phone || "";
+				document.getElementById("dob").textContent = data.dob || "";
+				document.getElementById("gender").textContent =
+					data.gender || "";
+
+				if (data.role === "doctor") {
+					document.getElementById("specializationBox").style.display =
+						"block";
+					document.getElementById("specialization").textContent =
+						data.specialization || "";
+				}
+			} catch (err) {
+				console.error(err);
+				alert("Something went wrong");
+			}
+		}
+		loadProfile();
 		//doclist
 		document.addEventListener("DOMContentLoaded", loadDoctors);
 		let selectedDoctorId = null;
@@ -268,5 +348,96 @@
 				debugBox.textContent = err.message;
 			}
 		}
+		//delete account
+		document.addEventListener("DOMContentLoaded", () => {
+			const deleteBtn = document.getElementById("deleteAccountBtn");
+			const cancelBtn = document.getElementById("cancelDeleteBtn");
+			const deleteSection = document.getElementById("deleteSection");
+			const deleteForm = document.getElementById("deleteAccountForm");
+			const deleteMessage = document.getElementById("deleteMessage");
+
+			console.log("deleteBtn:", deleteBtn);
+			console.log("deleteSection:", deleteSection);
+
+			if (
+				!deleteBtn ||
+				!cancelBtn ||
+				!deleteSection ||
+				!deleteForm ||
+				!deleteMessage
+			) {
+				console.error(
+					"Some delete account elements are missing in HTML",
+				);
+				return;
+			}
+
+			deleteBtn.addEventListener("click", () => {
+				console.log("Delete button clicked");
+				deleteSection.style.display = "block";
+				deleteMessage.value = "";
+			});
+
+			cancelBtn.addEventListener("click", () => {
+				deleteSection.style.display = "none";
+				deleteForm.reset();
+				deleteMessage.value = "";
+			});
+
+			deleteForm.addEventListener("submit", async (e) => {
+				e.preventDefault();
+
+				const email = document
+					.getElementById("deleteEmail")
+					.value.trim();
+				const password = document
+					.getElementById("deletePassword")
+					.value.trim();
+				const confirmPassword = document
+					.getElementById("confirmDeletePassword")
+					.value.trim();
+
+				if (!email || !password || !confirmPassword) {
+					deleteMessage.value = "Please fill all fields";
+					return;
+				}
+
+				if (password !== confirmPassword) {
+					deleteMessage.value = "Passwords do not match";
+					return;
+				}
+
+				try {
+					const response = await fetch("/request/deleteaccount", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							email,
+							password,
+							confirmPassword,
+						}),
+					});
+
+					const data = await response.json();
+
+					if (!response.ok) {
+						deleteMessage.value = data.message || "Deletion failed";
+						return;
+					}
+
+					deleteMessage.value =
+						data.message || "Account deactivated successfully";
+
+					setTimeout(() => {
+						window.location.replace("/");
+					}, 1000);
+				} catch (err) {
+					console.error(err);
+					deleteMessage.value = "Deletion failed";
+				}
+			});
+		});
 	</script>
 </html>

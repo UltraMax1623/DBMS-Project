@@ -96,146 +96,255 @@
 		<div id="appointmentContainer"></div>
 		<div id="debugBox1" class="debug"></div>
 
-		<script>
-			document
-				.getElementById("doccreateForm")
-				.addEventListener("submit", signupUser);
+		<button id="deleteAccountBtn" type="button">Delete Account</button>
 
-			async function signupUser(e) {
-				e.preventDefault();
+		<div id="deleteSection" style="display: none; margin-top: 15px">
+			<button id="cancelDeleteBtn" type="button">No</button>
 
-				const name = document.getElementById("name").value;
-				const email = document.getElementById("email").value;
-				const password = document.getElementById("password").value;
-				const confirmPassword =
-					document.getElementById("confirmPassword").value;
-				const specialization =
-					document.getElementById("specialization").value;
-				const phone_no = document.getElementById("phone").value;
-				const dob = document.getElementById("dob").value;
-				const gender = document.querySelector(
-					'input[name="gender"]:checked',
-				)?.value;
-				const emailResult = document.getElementById("emailResult");
-				const passwordResult =
-					document.getElementById("passwordResult");
+			<form id="deleteAccountForm" style="margin-top: 10px">
+				<div>
+					<label>Doctor Email:</label>
+					<input type="email" id="deleteEmail" required />
+				</div>
 
-				if (password !== confirmPassword) {
-					alert("Passwords do not match");
+				<div>
+					<label>Admin Password:</label>
+					<input type="password" id="deletePassword" required />
+				</div>
+
+				<div style="margin-top: 10px">
+					<button type="submit">Confirm Delete</button>
+				</div>
+
+				<div style="margin-top: 10px">
+					<input
+						type="text"
+						id="deleteMessage"
+						readonly
+						placeholder="Status message will appear here"
+						style="width: 300px"
+					/>
+				</div>
+			</form>
+		</div>
+	</body>
+	<script>
+		document
+			.getElementById("doccreateForm")
+			.addEventListener("submit", signupUser);
+
+		async function signupUser(e) {
+			e.preventDefault();
+
+			const name = document.getElementById("name").value;
+			const email = document.getElementById("email").value;
+			const password = document.getElementById("password").value;
+			const confirmPassword =
+				document.getElementById("confirmPassword").value;
+			const specialization =
+				document.getElementById("specialization").value;
+			const phone_no = document.getElementById("phone").value;
+			const dob = document.getElementById("dob").value;
+			const gender = document.querySelector(
+				'input[name="gender"]:checked',
+			)?.value;
+			const emailResult = document.getElementById("emailResult");
+			const passwordResult = document.getElementById("passwordResult");
+
+			if (password !== confirmPassword) {
+				alert("Passwords do not match");
+				return;
+			}
+
+			try {
+				const response = await fetch("/signup/doc", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						name,
+						email,
+						password,
+						phone_no,
+						dob,
+						gender,
+						specialization,
+					}),
+				});
+
+				const data = await response.json();
+				emailResult.value = data.email;
+				passwordResult.value = data.password;
+				if (response.ok && data.redirect) {
+					window.location.href = data.redirect;
+				}
+			} catch (err) {
+				console.error("Signup request failed:", err);
+				emailResult.value = "Request failed: " + err.message;
+				passwordResult.value = "Request failed: " + err.message;
+			}
+		}
+		// Fetch and display the list of doctors
+		document.addEventListener("DOMContentLoaded", loadDoctors);
+
+		async function loadDoctors() {
+			const status = document.getElementById("status");
+			const container = document.getElementById("doctorContainer");
+
+			status.textContent = "Loading doctor list...";
+			container.innerHTML = "";
+
+			try {
+				const response = await fetch("/loaddata/doctorlist");
+
+				const contentType = response.headers.get("content-type") || "";
+
+				let data;
+
+				if (contentType.includes("application/json")) {
+					data = await response.json();
+				} else {
+					const text = await response.text();
+					throw new Error(
+						"Server did not return JSON.\nResponse:\n" + text,
+					);
+				}
+				if (!response.ok) {
+					throw new Error(
+						data.message || `HTTP error ${response.status}`,
+					);
+				}
+
+				if (!Array.isArray(data)) {
+					throw new Error(
+						"Expected an array, but got: " + typeof data,
+					);
+				}
+
+				if (data.length === 0) {
+					status.textContent = "No patients found.";
 					return;
 				}
 
+				status.textContent = `Loaded ${data.length} patient(s).`;
+
+				data.forEach((doc, index) => {
+					const div = document.createElement("div");
+					div.className = "card";
+
+					div.innerHTML = `
+			            <div><strong>Row:</strong> ${index + 1}</div>
+			            <div><strong>User ID:</strong> ${doc.user_id ?? "N/A"}</div>
+			            <div><strong>Name:</strong> ${doc.name ?? "N/A"}</div>
+			            <div><strong>Email:</strong> ${doc.email ?? "N/A"}</div>
+			            <div><strong>Specialization:</strong> ${doc.specialization ?? "N/A"}</div>
+			            <div><strong>Phone:</strong> ${doc.phone_no ?? "N/A"}</div>
+			            <div><strong>DOB:</strong> ${doc.dob ?? "N/A"}</div>
+			            <div><strong>Gender:</strong> ${doc.gender ?? "N/A"}</div>
+			          `;
+
+					container.appendChild(div);
+				});
+			} catch (err) {
+				console.error("Failed to load patients:", err);
+				status.innerHTML = `<span class="error">Failed to load patient list.</span>`;
+			}
+		}
+		// Fetch and display the list of patients
+		document.addEventListener("DOMContentLoaded", loadPatients);
+
+		async function loadPatients() {
+			const status = document.getElementById("pstatus");
+			const container = document.getElementById("patientContainer");
+
+			status.textContent = "Loading patient list...";
+			container.innerHTML = "";
+
+			try {
+				const response = await fetch("/loaddata/patientlist");
+				const contentType = response.headers.get("content-type") || "";
+
+				let data;
+
+				if (contentType.includes("application/json")) {
+					data = await response.json();
+				} else {
+					const text = await response.text();
+					throw new Error(
+						"Server did not return JSON.\nResponse:\n" + text,
+					);
+				}
+
+				if (!response.ok) {
+					throw new Error(
+						data.message || `HTTP error ${response.status}`,
+					);
+				}
+
+				if (!Array.isArray(data)) {
+					throw new Error(
+						"Expected an array, but got: " + typeof data,
+					);
+				}
+
+				if (data.length === 0) {
+					status.textContent = "No patients found.";
+					return;
+				}
+
+				status.textContent = `Loaded ${data.length} patient(s).`;
+
+				data.forEach((patient, index) => {
+					const div = document.createElement("div");
+					div.className = "card";
+
+					div.innerHTML = `
+			                <div><strong>Row:</strong> ${index + 1}</div>
+			                <div><strong>User ID:</strong> ${patient.user_id ?? "N/A"}</div>
+			                <div><strong>Name:</strong> ${patient.name ?? "N/A"}</div>
+			                <div><strong>Email:</strong> ${patient.email ?? "N/A"}</div>
+			                <div><strong>Phone:</strong> ${patient.phone_no ?? "N/A"}</div>
+			                <div><strong>DOB:</strong> ${patient.dob ?? "N/A"}</div>
+			                <div><strong>Gender:</strong> ${patient.gender ?? "N/A"}</div>
+			            `;
+
+					container.appendChild(div);
+				});
+			} catch (err) {
+				console.error("Failed to load patients:", err);
+				status.innerHTML = `<span class="error">${err.message}</span>`;
+			}
+		}
+		//list appointments and update status
+		document.addEventListener("DOMContentLoaded", () => {
+			loadAppointments();
+
+			const container = document.getElementById("appointmentContainer");
+
+			container.addEventListener("change", async (e) => {
+				const target = e.target;
+
+				if (!target.matches('input[type="radio"]')) return;
+
+				const wrapper = target.closest(".statusForm");
+				const appointmentId = wrapper.dataset.id;
+				const newStatus = target.value;
+
 				try {
-					const response = await fetch("/signup/doc", {
+					const response = await fetch("/request/docupdatestatus", {
 						method: "POST",
 						headers: {
 							"Content-Type": "application/json",
 						},
 						body: JSON.stringify({
-							name,
-							email,
-							password,
-							phone_no,
-							dob,
-							gender,
-							specialization,
+							appointment_id: appointmentId,
+							status: newStatus,
 						}),
 					});
 
-					const data = await response.json();
-					emailResult.value = data.email;
-					passwordResult.value = data.password;
-					if (response.ok && data.redirect) {
-						window.location.href = data.redirect;
-					}
-				} catch (err) {
-					console.error("Signup request failed:", err);
-					emailResult.value = "Request failed: " + err.message;
-					passwordResult.value = "Request failed: " + err.message;
-				}
-			}
-			// Fetch and display the list of doctors
-			document.addEventListener("DOMContentLoaded", loadDoctors);
-
-			async function loadDoctors() {
-				const status = document.getElementById("status");
-				const container = document.getElementById("doctorContainer");
-
-				status.textContent = "Loading doctor list...";
-				container.innerHTML = "";
-
-				try {
-					const response = await fetch("/loaddata/doctorlist");
-
 					const contentType =
 						response.headers.get("content-type") || "";
-
-					let data;
-
-					if (contentType.includes("application/json")) {
-						data = await response.json();
-					} else {
-						const text = await response.text();
-						throw new Error(
-							"Server did not return JSON.\nResponse:\n" + text,
-						);
-					}
-					if (!response.ok) {
-						throw new Error(
-							data.message || `HTTP error ${response.status}`,
-						);
-					}
-
-					if (!Array.isArray(data)) {
-						throw new Error(
-							"Expected an array, but got: " + typeof data,
-						);
-					}
-
-					if (data.length === 0) {
-						status.textContent = "No patients found.";
-						return;
-					}
-
-					status.textContent = `Loaded ${data.length} patient(s).`;
-
-					data.forEach((doc, index) => {
-						const div = document.createElement("div");
-						div.className = "card";
-
-						div.innerHTML = `
-            <div><strong>Row:</strong> ${index + 1}</div>
-            <div><strong>User ID:</strong> ${doc.user_id ?? "N/A"}</div>
-            <div><strong>Name:</strong> ${doc.name ?? "N/A"}</div>
-            <div><strong>Email:</strong> ${doc.email ?? "N/A"}</div>
-            <div><strong>Specialization:</strong> ${doc.specialization ?? "N/A"}</div>
-            <div><strong>Phone:</strong> ${doc.phone_no ?? "N/A"}</div>
-            <div><strong>DOB:</strong> ${doc.dob ?? "N/A"}</div>
-            <div><strong>Gender:</strong> ${doc.gender ?? "N/A"}</div>
-          `;
-
-						container.appendChild(div);
-					});
-				} catch (err) {
-					console.error("Failed to load patients:", err);
-					status.innerHTML = `<span class="error">Failed to load patient list.</span>`;
-				}
-			}
-			// Fetch and display the list of patients
-			document.addEventListener("DOMContentLoaded", loadPatients);
-
-			async function loadPatients() {
-				const status = document.getElementById("pstatus");
-				const container = document.getElementById("patientContainer");
-
-				status.textContent = "Loading patient list...";
-				container.innerHTML = "";
-
-				try {
-					const response = await fetch("/loaddata/patientlist");
-					const contentType =
-						response.headers.get("content-type") || "";
-
 					let data;
 
 					if (contentType.includes("application/json")) {
@@ -249,169 +358,73 @@
 
 					if (!response.ok) {
 						throw new Error(
-							data.message || `HTTP error ${response.status}`,
+							data.message || "Failed to update status",
 						);
 					}
 
-					if (!Array.isArray(data)) {
-						throw new Error(
-							"Expected an array, but got: " + typeof data,
-						);
-					}
-
-					if (data.length === 0) {
-						status.textContent = "No patients found.";
-						return;
-					}
-
-					status.textContent = `Loaded ${data.length} patient(s).`;
-
-					data.forEach((patient, index) => {
-						const div = document.createElement("div");
-						div.className = "card";
-
-						div.innerHTML = `
-                <div><strong>Row:</strong> ${index + 1}</div>
-                <div><strong>User ID:</strong> ${patient.user_id ?? "N/A"}</div>
-                <div><strong>Name:</strong> ${patient.name ?? "N/A"}</div>
-                <div><strong>Email:</strong> ${patient.email ?? "N/A"}</div>
-                <div><strong>Phone:</strong> ${patient.phone_no ?? "N/A"}</div>
-                <div><strong>DOB:</strong> ${patient.dob ?? "N/A"}</div>
-                <div><strong>Gender:</strong> ${patient.gender ?? "N/A"}</div>
-            `;
-
-						container.appendChild(div);
-					});
-				} catch (err) {
-					console.error("Failed to load patients:", err);
-					status.innerHTML = `<span class="error">${err.message}</span>`;
-				}
-			}
-			//list appointments
-			document.addEventListener("DOMContentLoaded", () => {
-				loadAppointments();
-
-				const container = document.getElementById(
-					"appointmentContainer",
-				);
-
-				container.addEventListener("submit", async function (e) {
-					if (!e.target.classList.contains("statusForm")) return;
-
-					e.preventDefault();
-
-					const form = e.target;
-					const appointment_id = form.dataset.id;
-					const selected = form.querySelector(
-						'input[type="radio"]:checked',
+					const statusSpan = document.getElementById(
+						`status-${appointmentId}`,
 					);
-
-					if (!selected) {
-						alert("Please select Confirm or Decline");
-						return;
+					if (statusSpan) {
+						statusSpan.textContent = newStatus;
 					}
-
-					const newStatus = selected.value;
-
-					try {
-						const response = await fetch(
-							"/request/appointmentstatus",
-							{
-								method: "POST",
-								headers: {
-									"Content-Type": "application/json",
-								},
-								body: JSON.stringify({
-									appointment_id,
-									status: newStatus,
-								}),
-							},
-						);
-
-						const contentType =
-							response.headers.get("content-type") || "";
-						let data;
-
-						if (contentType.includes("application/json")) {
-							data = await response.json();
-						} else {
-							const text = await response.text();
-							throw new Error(
-								"Server did not return JSON.\nResponse:\n" +
-									text,
-							);
-						}
-
-						if (!response.ok) {
-							throw new Error(
-								data.message ||
-									"Failed to update appointment status",
-							);
-						}
-
-						document.getElementById(
-							`status-${appointment_id}`,
-						).textContent = newStatus;
-						alert(data.message);
-					} catch (err) {
-						console.error("Status update failed:", err);
-						alert(err.message);
-					}
-				});
+				} catch (err) {
+					console.error("Status update failed:", err);
+					alert(err.message);
+					await loadAppointments();
+				}
 			});
+		});
 
-			async function loadAppointments() {
-				const status = document.getElementById("appointmentstatus");
-				const container = document.getElementById(
-					"appointmentContainer",
-				);
-				const debugBox = document.getElementById("debugBox1");
+		async function loadAppointments() {
+			const status = document.getElementById("appointmentstatus");
+			const container = document.getElementById("appointmentContainer");
+			const debugBox = document.getElementById("debugBox1");
 
-				status.textContent = "Loading appointment list...";
-				container.innerHTML = "";
-				debugBox.textContent = "";
+			status.textContent = "Loading appointment list...";
+			container.innerHTML = "";
+			debugBox.textContent = "";
 
-				try {
-					const response = await fetch("/loaddata/appointmentlist");
-					const contentType =
-						response.headers.get("content-type") || "";
+			try {
+				const response = await fetch("/loaddata/appointmentlist");
+				const contentType = response.headers.get("content-type") || "";
 
-					let data;
+				let data;
 
-					if (contentType.includes("application/json")) {
-						data = await response.json();
-					} else {
-						const text = await response.text();
-						throw new Error(
-							"Server did not return JSON.\nResponse:\n" + text,
-						);
-					}
+				if (contentType.includes("application/json")) {
+					data = await response.json();
+				} else {
+					const text = await response.text();
+					throw new Error(
+						"Server did not return JSON.\nResponse:\n" + text,
+					);
+				}
 
-					if (!response.ok) {
-						throw new Error(
-							data.message || `HTTP error ${response.status}`,
-						);
-					}
+				if (!response.ok) {
+					throw new Error(
+						data.message || `HTTP error ${response.status}`,
+					);
+				}
 
-					if (!Array.isArray(data)) {
-						throw new Error(
-							"Expected an array, but got: " + typeof data,
-						);
-					}
+				if (!Array.isArray(data)) {
+					throw new Error(
+						"Expected an array, but got: " + typeof data,
+					);
+				}
 
-					if (data.length === 0) {
-						status.textContent = "No appointments found.";
-						return;
-					}
+				if (data.length === 0) {
+					status.textContent = "No appointments found.";
+					return;
+				}
 
-					status.textContent = `Loaded ${data.length} appointment(s).`;
-					debugBox.textContent = JSON.stringify(data, null, 2);
+				status.textContent = `Loaded ${data.length} appointment(s).`;
+				debugBox.textContent = JSON.stringify(data, null, 2);
 
-					data.forEach((item, index) => {
-						const div = document.createElement("div");
-						div.className = "card";
+				data.forEach((item, index) => {
+					const div = document.createElement("div");
+					div.className = "card";
 
-						div.innerHTML = `
+					div.innerHTML = `
                 <div><strong>Row:</strong> ${index + 1}</div>
                 <div><strong>Appointment ID:</strong> ${item.appointment_id ?? "N/A"}</div>
                 <div><strong>Patient Name:</strong> ${item.patient_name ?? "N/A"}</div>
@@ -420,51 +433,129 @@
                 <div><strong>Date:</strong> ${item.appointment_date ?? "N/A"}</div>
                 <div><strong>Time:</strong> ${item.appointment_time ?? "N/A"}</div>
                 <div><strong>Reason:</strong> ${item.reason ?? "N/A"}</div>
-                <div><strong>Current Status:</strong> <span id="status-${item.appointment_id}">${item.request_status ?? "pending"}</span></div>
+                <div>
+                    <strong>Current Status:</strong>
+                    <span id="status-${item.appointment_id}">${item.request_status ?? "pending"}</span>
+                </div>
 
-                <form class="statusForm" data-id="${item.appointment_id}">
-    <label>
-        <input
-            type="radio"
-            name="status-${item.appointment_id}"
-            value="pending"
-            ${!item.request_status || item.request_status === "pending" ? "checked" : ""}
-        >
-        Pending
-    </label>
+                <div class="statusForm" data-id="${item.appointment_id}">
+                    <label>
+                        <input
+                            type="radio"
+                            name="status-${item.appointment_id}"
+                            value="pending"
+                            ${!item.request_status || item.request_status === "pending" ? "checked" : ""}
+                        >
+                        Pending
+                    </label>
 
-    <label>
-        <input
-            type="radio"
-            name="status-${item.appointment_id}"
-            value="confirmed"
-            ${item.request_status === "confirmed" ? "checked" : ""}
-        >
-        Confirmed
-    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            name="status-${item.appointment_id}"
+                            value="confirmed"
+                            ${item.request_status === "confirmed" ? "checked" : ""}
+                        >
+                        Confirmed
+                    </label>
 
-    <label>
-        <input
-            type="radio"
-            name="status-${item.appointment_id}"
-            value="declined"
-            ${item.request_status === "declined" ? "checked" : ""}
-        >
-        Declined
-    </label>
-
-    <button type="submit">Update Status</button>
-</form>
+                    <label>
+                        <input
+                            type="radio"
+                            name="status-${item.appointment_id}"
+                            value="declined"
+                            ${item.request_status === "declined" ? "checked" : ""}
+                        >
+                        Declined
+                    </label>
+                </div>
             `;
 
-						container.appendChild(div);
-					});
-				} catch (err) {
-					console.error("Failed to load appointments:", err);
-					status.innerHTML = `<span class="error">Failed to load appointment list.</span>`;
-					debugBox.textContent = err.message;
-				}
+					container.appendChild(div);
+				});
+			} catch (err) {
+				console.error("Failed to load appointments:", err);
+				status.innerHTML = `<span class="error">Failed to load appointment list.</span>`;
+				debugBox.textContent = err.message;
 			}
-		</script>
-	</body>
+		}
+		//delete account
+		document.addEventListener("DOMContentLoaded", () => {
+			const deleteBtn = document.getElementById("deleteAccountBtn");
+			const cancelBtn = document.getElementById("cancelDeleteBtn");
+			const deleteSection = document.getElementById("deleteSection");
+			const deleteForm = document.getElementById("deleteAccountForm");
+			const deleteMessage = document.getElementById("deleteMessage");
+
+			console.log("deleteBtn:", deleteBtn);
+			console.log("deleteSection:", deleteSection);
+
+			if (
+				!deleteBtn ||
+				!cancelBtn ||
+				!deleteSection ||
+				!deleteForm ||
+				!deleteMessage
+			) {
+				console.error(
+					"Some delete account elements are missing in HTML",
+				);
+				return;
+			}
+
+			deleteBtn.addEventListener("click", () => {
+				console.log("Delete button clicked");
+				deleteSection.style.display = "block";
+				deleteMessage.value = "";
+			});
+
+			cancelBtn.addEventListener("click", () => {
+				deleteSection.style.display = "none";
+				deleteForm.reset();
+				deleteMessage.value = "";
+			});
+
+			deleteForm.addEventListener("submit", async (e) => {
+				e.preventDefault();
+
+				const targetEmail = document
+					.getElementById("deleteEmail")
+					.value.trim();
+				const adminPassword = document
+					.getElementById("deletePassword")
+					.value.trim();
+
+				if (!targetEmail || !adminPassword) {
+					deleteMessage.value = "Please fill all fields";
+					return;
+				}
+
+				try {
+					const response = await fetch("/request/deleteaccount", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							targetEmail,
+							adminPassword,
+						}),
+					});
+
+					const data = await response.json();
+
+					if (!response.ok) {
+						deleteMessage.value = data.message || "Deletion failed";
+						return;
+					}
+
+					deleteMessage.value =
+						data.message || "User deleted successfully";
+				} catch (err) {
+					console.error(err);
+					deleteMessage.value = "Deletion failed";
+				}
+			});
+		});
+	</script>
 </html>

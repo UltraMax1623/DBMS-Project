@@ -47,7 +47,7 @@ const SignupUser = async (req, res) => {
       message: "Signup successful",
       loginUserId: userId,
       patientId: patientResult.insertId,
-      redirect: "/HTML/patient.html"
+      redirect: "/HTML/login.html"
     });
 
   } catch (err) {
