@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Doctor Signup</title>
+		<title>admin dashboard</title>
 	</head>
 	<body>
 		<h1>Create Doctor Account</h1>
@@ -91,6 +91,10 @@
 		<h1>Patient List</h1>
 		<div id="pstatus"></div>
 		<div id="patientContainer"></div>
+		<h1>Appointments list</h1>
+		<div id="appointmentstatus"></div>
+		<div id="appointmentContainer"></div>
+		<div id="debugBox1" class="debug"></div>
 
 		<script>
 			document
@@ -281,6 +285,184 @@
 				} catch (err) {
 					console.error("Failed to load patients:", err);
 					status.innerHTML = `<span class="error">${err.message}</span>`;
+				}
+			}
+			//list appointments
+			document.addEventListener("DOMContentLoaded", () => {
+				loadAppointments();
+
+				const container = document.getElementById(
+					"appointmentContainer",
+				);
+
+				container.addEventListener("submit", async function (e) {
+					if (!e.target.classList.contains("statusForm")) return;
+
+					e.preventDefault();
+
+					const form = e.target;
+					const appointment_id = form.dataset.id;
+					const selected = form.querySelector(
+						'input[type="radio"]:checked',
+					);
+
+					if (!selected) {
+						alert("Please select Confirm or Decline");
+						return;
+					}
+
+					const newStatus = selected.value;
+
+					try {
+						const response = await fetch(
+							"/request/appointmentstatus",
+							{
+								method: "POST",
+								headers: {
+									"Content-Type": "application/json",
+								},
+								body: JSON.stringify({
+									appointment_id,
+									status: newStatus,
+								}),
+							},
+						);
+
+						const contentType =
+							response.headers.get("content-type") || "";
+						let data;
+
+						if (contentType.includes("application/json")) {
+							data = await response.json();
+						} else {
+							const text = await response.text();
+							throw new Error(
+								"Server did not return JSON.\nResponse:\n" +
+									text,
+							);
+						}
+
+						if (!response.ok) {
+							throw new Error(
+								data.message ||
+									"Failed to update appointment status",
+							);
+						}
+
+						document.getElementById(
+							`status-${appointment_id}`,
+						).textContent = newStatus;
+						alert(data.message);
+					} catch (err) {
+						console.error("Status update failed:", err);
+						alert(err.message);
+					}
+				});
+			});
+
+			async function loadAppointments() {
+				const status = document.getElementById("appointmentstatus");
+				const container = document.getElementById(
+					"appointmentContainer",
+				);
+				const debugBox = document.getElementById("debugBox1");
+
+				status.textContent = "Loading appointment list...";
+				container.innerHTML = "";
+				debugBox.textContent = "";
+
+				try {
+					const response = await fetch("/loaddata/appointmentlist");
+					const contentType =
+						response.headers.get("content-type") || "";
+
+					let data;
+
+					if (contentType.includes("application/json")) {
+						data = await response.json();
+					} else {
+						const text = await response.text();
+						throw new Error(
+							"Server did not return JSON.\nResponse:\n" + text,
+						);
+					}
+
+					if (!response.ok) {
+						throw new Error(
+							data.message || `HTTP error ${response.status}`,
+						);
+					}
+
+					if (!Array.isArray(data)) {
+						throw new Error(
+							"Expected an array, but got: " + typeof data,
+						);
+					}
+
+					if (data.length === 0) {
+						status.textContent = "No appointments found.";
+						return;
+					}
+
+					status.textContent = `Loaded ${data.length} appointment(s).`;
+					debugBox.textContent = JSON.stringify(data, null, 2);
+
+					data.forEach((item, index) => {
+						const div = document.createElement("div");
+						div.className = "card";
+
+						div.innerHTML = `
+                <div><strong>Row:</strong> ${index + 1}</div>
+                <div><strong>Appointment ID:</strong> ${item.appointment_id ?? "N/A"}</div>
+                <div><strong>Patient Name:</strong> ${item.patient_name ?? "N/A"}</div>
+                <div><strong>Doctor Name:</strong> ${item.doctor_name ?? "N/A"}</div>
+                <div><strong>Doctor Specialization:</strong> ${item.specialization ?? "N/A"}</div>
+                <div><strong>Date:</strong> ${item.appointment_date ?? "N/A"}</div>
+                <div><strong>Time:</strong> ${item.appointment_time ?? "N/A"}</div>
+                <div><strong>Reason:</strong> ${item.reason ?? "N/A"}</div>
+                <div><strong>Current Status:</strong> <span id="status-${item.appointment_id}">${item.request_status ?? "pending"}</span></div>
+
+                <form class="statusForm" data-id="${item.appointment_id}">
+    <label>
+        <input
+            type="radio"
+            name="status-${item.appointment_id}"
+            value="pending"
+            ${!item.request_status || item.request_status === "pending" ? "checked" : ""}
+        >
+        Pending
+    </label>
+
+    <label>
+        <input
+            type="radio"
+            name="status-${item.appointment_id}"
+            value="confirmed"
+            ${item.request_status === "confirmed" ? "checked" : ""}
+        >
+        Confirmed
+    </label>
+
+    <label>
+        <input
+            type="radio"
+            name="status-${item.appointment_id}"
+            value="declined"
+            ${item.request_status === "declined" ? "checked" : ""}
+        >
+        Declined
+    </label>
+
+    <button type="submit">Update Status</button>
+</form>
+            `;
+
+						container.appendChild(div);
+					});
+				} catch (err) {
+					console.error("Failed to load appointments:", err);
+					status.innerHTML = `<span class="error">Failed to load appointment list.</span>`;
+					debugBox.textContent = err.message;
 				}
 			}
 		</script>

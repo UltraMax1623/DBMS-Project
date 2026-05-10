@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Doctor Signup</title>
+		<title>Patient Dashboard</title>
 	</head>
 	<style>
 		.doctor-card {
@@ -25,6 +25,7 @@
 		}
 	</style>
 	<body>
+		<h1>Request Appointment</h1>
 		<form id="reqappointment">
 			<input type="hidden" id="selectedDoctorId" />
 
@@ -56,6 +57,10 @@
 			<button type="submit">Submit</button>
 			<div id="formMessage"></div>
 		</form>
+		<h1>My Appointments</h1>
+		<div id="appointmentstatus"></div>
+		<div id="appointmentContainer"></div>
+		<div id="debugBox1" class="debug"></div>
 	</body>
 	<script>
 		//doclist
@@ -191,6 +196,76 @@
 				console.error(err);
 				debugBox.textContent = err.message;
 				alert(err.message);
+			}
+		}
+		//list userappointments
+		document.addEventListener("DOMContentLoaded", loadAppointments);
+		async function loadAppointments() {
+			const status = document.getElementById("appointmentstatus");
+			const container = document.getElementById("appointmentContainer");
+			const debugBox = document.getElementById("debugBox1");
+
+			status.textContent = "Loading appointment list...";
+			container.innerHTML = "";
+			debugBox.textContent = "";
+
+			try {
+				const response = await fetch("/loaddata/userappointmentlist");
+				const contentType = response.headers.get("content-type") || "";
+
+				let data;
+
+				if (contentType.includes("application/json")) {
+					data = await response.json();
+				} else {
+					const text = await response.text();
+					throw new Error(
+						"Server did not return JSON.\nResponse:\n" + text,
+					);
+				}
+
+				if (!response.ok) {
+					throw new Error(
+						data.message || `HTTP error ${response.status}`,
+					);
+				}
+
+				if (!Array.isArray(data)) {
+					throw new Error(
+						"Expected an array, but got: " + typeof data,
+					);
+				}
+
+				if (data.length === 0) {
+					status.textContent = "No appointments found.";
+					return;
+				}
+
+				status.textContent = `Loaded ${data.length} appointment(s).`;
+				debugBox.textContent = JSON.stringify(data, null, 2);
+
+				data.forEach((item, index) => {
+					const div = document.createElement("div");
+					div.className = "card";
+
+					div.innerHTML = `
+                <div><strong>Row:</strong> ${index + 1}</div>
+                <div><strong>Appointment ID:</strong> ${item.appointment_id ?? "N/A"}</div>
+                <div><strong>Patient Name:</strong> ${item.patient_name ?? "N/A"}</div>
+                <div><strong>Doctor Name:</strong> ${item.doctor_name ?? "N/A"}</div>
+                <div><strong>Doctor Specialization:</strong> ${item.specialization ?? "N/A"}</div>
+                <div><strong>Date:</strong> ${item.appointment_date ?? "N/A"}</div>
+                <div><strong>Time:</strong> ${item.appointment_time ?? "N/A"}</div>
+                <div><strong>Reason:</strong> ${item.reason ?? "N/A"}</div>
+                <div><strong>Status:</strong> ${item.request_status ?? "N/A"}</div>
+            `;
+
+					container.appendChild(div);
+				});
+			} catch (err) {
+				console.error("Failed to load appointments:", err);
+				status.innerHTML = `<span class="error">Failed to load appointment list.</span>`;
+				debugBox.textContent = err.message;
 			}
 		}
 	</script>
