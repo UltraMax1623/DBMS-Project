@@ -23,6 +23,23 @@
 			border: 2px solid blue;
 			background: #e6f0ff;
 		}
+		.appointment-card {
+			border: 1px solid #ccc;
+			padding: 12px;
+			margin: 10px 0;
+			border-radius: 8px;
+			cursor: pointer;
+			background: white;
+		}
+
+		.appointment-card:hover {
+			background: #f5f5f5;
+		}
+
+		.appointment-card.selected {
+			border: 2px solid blue;
+			background: #e6f0ff;
+		}
 	</style>
 	<body>
 		<h1>My Profile</h1>
@@ -278,8 +295,8 @@
 				alert(err.message);
 			}
 		}
-		//list userappointments
 		document.addEventListener("DOMContentLoaded", loadAppointments);
+
 		async function loadAppointments() {
 			const status = document.getElementById("appointmentstatus");
 			const container = document.getElementById("appointmentContainer");
@@ -322,11 +339,14 @@
 				}
 
 				status.textContent = `Loaded ${data.length} appointment(s).`;
-				debugBox.textContent = JSON.stringify(data, null, 2);
+				debugBox.textContent =
+					"Click any appointment card to open full details page.";
 
 				data.forEach((item, index) => {
 					const div = document.createElement("div");
-					div.className = "card";
+					div.className = "appointment-card";
+					div.dataset.id = item.appointment_id;
+					div.style.cursor = "pointer";
 
 					div.innerHTML = `
                 <div><strong>Row:</strong> ${index + 1}</div>
@@ -339,6 +359,18 @@
                 <div><strong>Reason:</strong> ${item.reason ?? "N/A"}</div>
                 <div><strong>Status:</strong> ${item.request_status ?? "N/A"}</div>
             `;
+
+					div.addEventListener("click", () => {
+						const appointmentId = item.appointment_id;
+
+						if (!appointmentId) {
+							debugBox.textContent =
+								"Appointment ID missing for selected card.";
+							return;
+						}
+
+						window.location.href = `./appointment-message.html?appointment_id=${encodeURIComponent(appointmentId)}`;
+					});
 
 					container.appendChild(div);
 				});

@@ -5,6 +5,25 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>admin dashboard</title>
 	</head>
+	<style>
+		.appointment-card {
+			border: 1px solid #ccc;
+			padding: 12px;
+			margin: 10px 0;
+			border-radius: 8px;
+			cursor: pointer;
+			background: white;
+		}
+
+		.appointment-card:hover {
+			background: #f5f5f5;
+		}
+
+		.appointment-card.selected {
+			border: 2px solid blue;
+			background: #e6f0ff;
+		}
+	</style>
 	<body>
 		<h1>Create Doctor Account</h1>
 		<form id="doccreateForm">
@@ -422,7 +441,7 @@
 
 				data.forEach((item, index) => {
 					const div = document.createElement("div");
-					div.className = "card";
+					div.className = "appointment-card";
 
 					div.innerHTML = `
                 <div><strong>Row:</strong> ${index + 1}</div>
@@ -559,3 +578,4 @@
 		});
 	</script>
 </html>
+`
