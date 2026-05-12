@@ -60,7 +60,7 @@
 
 			<div id="status"></div>
 			<div id="doctorContainer"></div>
-			<div id="debugBox" class="debug"></div>
+			<!-- <div id="debugBox" class="debug"></div> -->
 
 			<input type="date" id="date" name="date" required />
 
@@ -87,7 +87,7 @@
 		<h1>My Appointments</h1>
 		<div id="appointmentstatus"></div>
 		<div id="appointmentContainer"></div>
-		<div id="debugBox1" class="debug"></div>
+		<!-- <div id="debugBox1" class="debug"></div> -->
 
 		<button id="deleteAccountBtn" type="button">Delete Account</button>
 
@@ -136,10 +136,10 @@
 				const response = await fetch("/loaddata/userprofile");
 				const data = await response.json();
 
-				if (!response.ok) {
-					alert(data.message || "Failed to load profile");
-					return;
-				}
+				// if (!response.ok) {
+				// 	alert(data.message || "Failed to load profile");
+				// 	return;
+				// }
 
 				document.getElementById("name").textContent = data.name || "";
 				document.getElementById("email").textContent = data.email || "";
@@ -167,11 +167,11 @@
 		async function loadDoctors() {
 			const status = document.getElementById("status");
 			const container = document.getElementById("doctorContainer");
-			const debugBox = document.getElementById("debugBox");
+			// const debugBox = document.getElementById("debugBox");
 
 			status.textContent = "Loading doctor list...";
 			container.innerHTML = "";
-			debugBox.textContent = "loadDoctors started\n";
+			// debugBox.textContent = "loadDoctors started\n";
 
 			try {
 				const response = await fetch("/loaddata/doctorlist");
@@ -222,7 +222,7 @@
 						document.getElementById("selectedDoctorId").value =
 							doc.user_id;
 
-						debugBox.textContent = `Selected Doctor ID: ${selectedDoctorId}`;
+						// debugBox.textContent = `Selected Doctor ID: ${selectedDoctorId}`;
 					});
 
 					container.appendChild(div);
@@ -230,7 +230,7 @@
 			} catch (err) {
 				console.error("Failed to load doctors:", err);
 				status.innerHTML = `<span style="color:red;">Failed to load doctor list.</span>`;
-				debugBox.textContent = `Error: ${err.message}`;
+				// debugBox.textContent = `Error: ${err.message}`;
 			}
 		}
 
@@ -245,16 +245,16 @@
 			const date = document.getElementById("date").value;
 			const category = document.getElementById("category").value;
 			const textInput = document.getElementById("textInput").value;
-			const debugBox = document.getElementById("debugBox");
+			// const debugBox = document.getElementById("debugBox");
 			const formMessage = document.getElementById("formMessage");
 
 			formMessage.style.color = "black";
 			formMessage.textContent = "Submitting...";
 
-			if (!doctor_id) {
-				alert("Please select one doctor");
-				return;
-			}
+			// if (!doctor_id) {
+			// 	alert("Please select one doctor");
+			// 	return;
+			// }
 
 			try {
 				const response = await fetch("/request/reqappointment", {
@@ -281,8 +281,8 @@
 				formMessage.style.color = "green";
 				formMessage.textContent =
 					data.message || "Appointment submitted successfully";
-				alert(data.message);
-				debugBox.textContent = JSON.stringify(data, null, 2);
+				// alert(data.message);
+				// debugBox.textContent = JSON.stringify(data, null, 2);
 				document.getElementById("reqappointment").reset();
 				document.getElementById("selectedDoctorId").value = "";
 				selectedDoctorId = null;
@@ -291,8 +291,8 @@
 				});
 			} catch (err) {
 				console.error(err);
-				debugBox.textContent = err.message;
-				alert(err.message);
+				// debugBox.textContent = err.message;
+				// alert(err.message);
 			}
 		}
 		document.addEventListener("DOMContentLoaded", loadAppointments);
@@ -300,11 +300,11 @@
 		async function loadAppointments() {
 			const status = document.getElementById("appointmentstatus");
 			const container = document.getElementById("appointmentContainer");
-			const debugBox = document.getElementById("debugBox1");
+			// const debugBox = document.getElementById("debugBox1");
 
 			status.textContent = "Loading appointment list...";
 			container.innerHTML = "";
-			debugBox.textContent = "";
+			// debugBox.textContent = "";
 
 			try {
 				const response = await fetch("/loaddata/userappointmentlist");
@@ -339,8 +339,8 @@
 				}
 
 				status.textContent = `Loaded ${data.length} appointment(s).`;
-				debugBox.textContent =
-					"Click any appointment card to open full details page.";
+				// debugBox.textContent =
+					// "Click any appointment card to open full details page.";
 
 				data.forEach((item, index) => {
 					const div = document.createElement("div");
@@ -364,9 +364,9 @@
 						const appointmentId = item.appointment_id;
 
 						if (!appointmentId) {
-							debugBox.textContent =
-								"Appointment ID missing for selected card.";
-							return;
+							// debugBox.textContent =
+								// "Appointment ID missing for selected card.";
+							// return;
 						}
 
 						window.location.href = `./appointment-message.html?appointment_id=${encodeURIComponent(appointmentId)}`;
@@ -377,7 +377,7 @@
 			} catch (err) {
 				console.error("Failed to load appointments:", err);
 				status.innerHTML = `<span class="error">Failed to load appointment list.</span>`;
-				debugBox.textContent = err.message;
+				// debugBox.textContent = err.message;
 			}
 		}
 		//delete account

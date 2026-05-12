@@ -113,7 +113,7 @@
 		<h1>Appointments list</h1>
 		<div id="appointmentstatus"></div>
 		<div id="appointmentContainer"></div>
-		<div id="debugBox1" class="debug"></div>
+		<!-- <div id="debugBox1" class="debug"></div> -->
 
 		<button id="deleteAccountBtn" type="button">Delete Account</button>
 
@@ -398,11 +398,11 @@
 		async function loadAppointments() {
 			const status = document.getElementById("appointmentstatus");
 			const container = document.getElementById("appointmentContainer");
-			const debugBox = document.getElementById("debugBox1");
+			// const debugBox = document.getElementById("debugBox1");
 
 			status.textContent = "Loading appointment list...";
 			container.innerHTML = "";
-			debugBox.textContent = "";
+			// debugBox.textContent = "";
 
 			try {
 				const response = await fetch("/loaddata/appointmentlist");
@@ -437,7 +437,7 @@
 				}
 
 				status.textContent = `Loaded ${data.length} appointment(s).`;
-				debugBox.textContent = JSON.stringify(data, null, 2);
+				// debugBox.textContent = JSON.stringify(data, null, 2);
 
 				data.forEach((item, index) => {
 					const div = document.createElement("div");
@@ -495,7 +495,7 @@
 			} catch (err) {
 				console.error("Failed to load appointments:", err);
 				status.innerHTML = `<span class="error">Failed to load appointment list.</span>`;
-				debugBox.textContent = err.message;
+				// debugBox.textContent = err.message;
 			}
 		}
 		//delete account

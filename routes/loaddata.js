@@ -12,7 +12,7 @@ router.get("/doctorlist", doclist);
 router.get("/patientlist",patientlist);
 router.get("/appointmentlist",appointmentlist);
 router.get("/userappointmentlist",userappointmentlist);
-router.get("/userprofile",userprofile)
+router.get("/userprofile",userprofile);
 router.get("/loadmessages",loadMessages);
 
 module.exports = router;
